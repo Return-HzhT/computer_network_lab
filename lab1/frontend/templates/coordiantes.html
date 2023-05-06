@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indoor Positioning</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+     integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+     crossorigin=""></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #1da08e;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        .footer{
+                color: rgba(0, 0, 0, 0.5);
+                font-size: small;
+                text-align: center;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                border-top: 1px solid black; /* for demo */
+                background: transparent; /* for demo */
+            }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+        }
+
+        nav li {
+            margin: 0 10px;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        #map-container {
+            display: flex;
+            justify-content: center;
+            padding: 0 10%;
+        }
+        
+        #map {
+            height: 800px;
+            width: 80%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+		<h1>室内信号定位</h1>
+		<nav>
+			<ul>
+				<li><a href="#">Home</a></li>
+				<li><a href="#">About</a></li>
+				<li><a href="#">Contact</a></li>
+			</ul>
+		</nav>
+	</header>
+    <div id="map-container">
+		<div id="map"></div>
+	</div>
+    <script type="text/javascript">
+        
+        fetch('/data')
+        .then(response => response.json())
+        .then(responsejson => {
+            // 在此处对接收到的 JSON 数据进行处理和使用
+            // 可以将数据存储在前端的变量中
+            points = JSON.parse(responsejson);
+            gtData = points.map(d => d.gt);
+            rssiData = points.map(d => d.rssi);
+            disData = points.map(d => d.dis);
+            // 创建地图
+            var map = L.map('map').setView([8, 8], 5); // 设置初始地图中心和缩放级别
+            
+            // 创建空白图层
+            var blankLayer = L.tileLayer('data:image/png;base64,iVBORw0KG...', {
+                minZoom: 0,
+                maxZoom: 16
+            }).addTo(map);
+
+            // 设置地图范围
+            map.setMaxBounds([[0, 0], [16, 16]]);
+
+            // 禁用默认的拖动和缩放行为
+            // map.dragging.disable();
+            map.touchZoom.disable();
+            map.doubleClickZoom.disable();
+            // map.scrollWheelZoom.disable();
+            // 创建网格线图层
+            var gridLayer = L.layerGroup().addTo(map);
+
+            // 绘制网格线
+            var gridOptions = {
+                color: 'gray',
+                weight: 1,
+                opacity: 0.5
+            };
+
+            // 绘制纵向网格线
+            for (var i = 0; i <= 16; i++) {
+                var verticalLine = L.polyline([[i, 0], [i, 16]], gridOptions).addTo(gridLayer);
+            }
+
+            // 绘制横向网格线
+            for (var j = 0; j <= 16; j++) {
+                var horizontalLine = L.polyline([[0, j], [16, j]], gridOptions).addTo(gridLayer);
+}
+            // 添加初始视图的矩形边界
+            L.rectangle([[0, 0], [16, 16]], {
+                color: 'black',
+                weight: 4,
+                fillOpacity: 0
+            }).addTo(map);
+            // 创建图例控件
+            var legendControl = L.control({ position: 'bottomright' });
+
+            // 定义图例的HTML内容
+            legendControl.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'legend');
+                div.innerHTML += '<div><span class="dis", style="background-color: green">G</span> Distance (dis)</div>';
+                div.innerHTML += '<div><span class="gt", style="background-color: red">R</span> Ground Truth (gt)</div>';
+                div.innerHTML += '<div><span class="rssi", style="background-color: blue">B</span> RSSI (rssi)</div>';
+                // div.innerHTML += '<div><hr><span class="custom-line" style="background-color: red;"></span> GT Line</div>';
+                div.style.backgroundColor = '#fff';
+                div.style.padding = '10px';
+                div.style.border = '1px solid #ccc';
+                div.style.borderRadius = '5px';
+                return div;
+            };
+                
+            // 将图例控件添加到地图上
+            legendControl.addTo(map);
+
+            var gt_layer = L.layerGroup().addTo(map);
+            var rssi_layer = L.layerGroup().addTo(map);
+            var dis_layer = L.layerGroup().addTo(map);
+
+
+            // 连接线
+            rssi_polyline = L.polyline(rssiData, {
+                    color: 'blue',
+                    weight: 2,
+                    opacity: 0.7
+                }).addTo(map);
+            rssi_layer.addLayer(rssi_polyline);
+            for(i = 0; i < rssiData.length; i++) {
+                // 绘制点
+                var [x, y] = rssiData[i];
+                rssi_marker = L.circleMarker(rssiData[i], {
+                    radius: 4,
+                    color: 'blue',
+                    fillColor: 'blue',
+                fillOpacity: 1
+                }).addTo(map);
+                rssi_marker.bindPopup('rssi:['+i+'] (' + x + ', ' + y + ')');
+                rssi_layer.addLayer(rssi_marker);
+
+                rssi_gt_polyline = L.polyline([gtData[i], rssiData[i]], {
+                    color: 'black',
+                    weight: 1,
+                    opacity: 0.7
+
+                }).addTo(map);
+                var dist = Math.sqrt((x - gtData[i][0])*(x - gtData[i][0]) + (y - gtData[i][1])*(y - gtData[i][1]));
+                rssi_gt_polyline.bindPopup('dis['+i+'] and gt['+i+']:'+dist);
+                rssi_layer.addLayer(rssi_gt_polyline);
+            }
+            // 连接线
+            dis_polyline = L.polyline(disData, {
+                    color: 'green',
+                    weight: 2,
+                    opacity: 0.7
+                }).addTo(map);
+            dis_layer.addLayer(dis_polyline);
+            for(i = 0; i < disData.length; i++) {
+                // 绘制点
+                var [x, y] = disData[i];
+                dis_marker = L.circleMarker(disData[i], {
+                    radius: 4,
+                    color: 'green',
+                    fillColor: 'green',
+                fillOpacity: 1
+                }).addTo(map);
+                dis_marker.bindPopup('dis:['+i+'] ' + '('+x + ', ' + y+')');
+                dis_layer.addLayer(dis_marker);
+                dis_gt_polyline = L.polyline([gtData[i], disData[i]], {
+                    color: 'black',
+                    weight: 1,
+                    opacity: 0.7
+
+                }).addTo(map);
+                var dist = Math.sqrt((x - gtData[i][0])*(x - gtData[i][0]) + (y - gtData[i][1])*(y - gtData[i][1]));
+                dis_gt_polyline.bindPopup('dis['+i+'] and gt['+i+']:'+dist);
+                dis_layer.addLayer(dis_gt_polyline);
+            }
+            var overlayMaps = {
+                // 'gt':    gt_layer,
+                'rssi':  rssi_layer,
+                'dis':   dis_layer
+            };
+
+            // 连接线
+            gt_polyline = L.polyline(gtData, {
+                    color: 'red',
+                    weight: 2,
+                    opacity: 0.7
+                }).addTo(map);
+            gt_layer.addLayer(gt_polyline);
+            for(i = 0; i < gtData.length; i++) {
+                // 绘制点
+                var [x, y] = gtData[i];
+                gt_marker = L.circleMarker(gtData[i], {
+                    radius: 4,
+                    color: 'red',
+                    fillColor: 'red',
+                fillOpacity: 1
+                }).addTo(map);
+                gt_marker.bindPopup('gt:['+i+'] ' + '('+x + ', ' + y+')');
+                gt_layer.addLayer(gt_marker);
+            }
+            // 添加图层控制
+            L.control.layers(null, overlayMaps, { position: 'topright' }).addTo(map);
+
+        })
+        .catch(error => {
+            // 处理请求错误
+            console.error('Error:', error);
+        });
+    </script>
+</body>
+<footer>
+    <div class="footer">
+
+        @2023春 计算机网络@
+        <br>
+        @室内信号定位@
+    </div>
+
+</footer>
+</html>
