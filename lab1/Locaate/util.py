@@ -67,16 +67,12 @@ def cal_position(dists, loc_dev):
     point = [0, 0]
     points = []
     points3 = []
-
-    assert (len(dists) == 3)
-    assert (len(loc_dev) == 3 and len(loc_dev[0]) == 2)
-    e = 0.2
+    e = 0
     found = False
     tmpx, tmpy = 0, 0
     tmpx1, tmpy1 = 0, 0
     tmpx2, tmpy2 = 0, 0
     for i in range(3):
-        assert (dists[i] >= 0)
         if found:
             break
         for j in range(i + 1, 3):
