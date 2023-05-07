@@ -50,7 +50,7 @@ data1, data2, data3, data4, data5 = np.load(
 
 loc_dev = [(4.3, 1.4), (0.0, 11.0), (16.0, 11.0)]
 devices = ['00f40443', '00f3f161', '00f40444']
-loc1, loc2, loc3, loc4, loc5 = (4, 6.5), (12, 5.5), (8, 8), (4, 11), (12, 11)
+loc1, loc2, loc3, loc4, loc5 = (4, 6.5), (11, 5.5), (8, 8), (4, 11), (12, 11)
 gt = [loc1, loc2, loc3, loc4, loc5]
 rssis = get_rssi(data1, devices) + get_rssi(data2, devices) + get_rssi(
     data3, devices) + get_rssi(data4, devices) + get_rssi(data5, devices)
@@ -164,19 +164,19 @@ def location(file):
 
 
 output = {}
-GT = np.array([[12.0, 5], [9.0, 5.0], [6.0, 5.0], [6.0, 8], [6.0, 11],
-               [9.0, 11], [12, 11], [12, 8]])
+GT = np.array([[11, 5], [8, 5.0], [5, 5.0], [5, 8], [5, 11], [8, 11], [11, 11],
+               [11, 8]])
 import json
 
-tmp1 = tmp2 = tmp3 = np.array([16, 0.0])
+tmp1 = tmp2 = tmp3 = np.array([8, 8.0])
 import matplotlib.pyplot as plt
 for i in range(8):
     l1, l2, t = location(f"./data/test/wifi_data_{i}.npy")
     output[t] = l1.tolist(), l2.tolist(), GT[i].tolist()
-    #plt.plot([tmp1[0], l1[0]], [tmp1[1], l1[1]], color='b')
-    #plt.plot([GT[i][0], l1[0]], [GT[i][1], l1[1]], color='g')
-    plt.plot([tmp2[0], l2[0]], [tmp2[1], l2[1]], color='b')
-    plt.plot([GT[i][0], l2[0]], [GT[i][1], l2[1]], color='g')
+    plt.plot([tmp1[0], l1[0]], [tmp1[1], l1[1]], color='b')
+    plt.plot([GT[i][0], l1[0]], [GT[i][1], l1[1]], color='g')
+    #plt.plot([tmp2[0], l2[0]], [tmp2[1], l2[1]], color='b')
+    #plt.plot([GT[i][0], l2[0]], [GT[i][1], l2[1]], color='g')
     plt.plot([tmp3[0], GT[i][0]], [tmp3[1], GT[i][1]], color='r')
     tmp1 = l1
     tmp2 = l2
