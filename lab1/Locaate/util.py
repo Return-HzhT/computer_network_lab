@@ -65,45 +65,30 @@ A3, N3 = linear_regress(rssis[3 + 2:13 + 2:3], dists[3 + 2:13 + 2:3])
 def cal_position(dists, loc_dev):
     import math
     point = [0, 0]
-    points = []
-    points3 = []
-    e = 0
-    found = False
-    tmpx, tmpy = 0, 0
-    tmpx1, tmpy1 = 0, 0
-    tmpx2, tmpy2 = 0, 0
+    e = 0.2
+    tmpx, tmpy = tmpx1, tmpy1 = tmpx2, tmpy2 = 0, 0
     for i in range(3):
-        if found:
-            break
         for j in range(i + 1, 3):
-            p2p = math.sqrt((loc_dev[i][0] - loc_dev[j][0]) *
-                            (loc_dev[i][0] - loc_dev[j][0]) +
-                            (loc_dev[i][1] - loc_dev[j][1]) *
-                            (loc_dev[i][1] - loc_dev[j][1]))
-            if dists[i] + dists[j] >= p2p:
-                dr = p2p / 2 + (dists[i] * dists[i] -
-                                dists[j] * dists[j]) / (2 * p2p)
+            dist_p = math.sqrt((loc_dev[i][0] - loc_dev[j][0]) *
+                               (loc_dev[i][0] - loc_dev[j][0]) +
+                               (loc_dev[i][1] - loc_dev[j][1]) *
+                               (loc_dev[i][1] - loc_dev[j][1]))
+            if dists[i] + dists[j] >= dist_p:
+                dr = dist_p / 2 + (dists[i] * dists[i] -
+                                   dists[j] * dists[j]) / (2 * dist_p)
                 ddr = math.sqrt(abs(dists[i] * dists[i] - dr * dr))
                 tmpx = loc_dev[i][0] + (loc_dev[j][0] -
-                                        loc_dev[i][0]) * dr / p2p
+                                        loc_dev[i][0]) * dr / dist_p
                 tmpy = loc_dev[i][1] + (loc_dev[j][1] -
-                                        loc_dev[i][1]) * dr / p2p
-                cos = -(loc_dev[j][1] - loc_dev[i][1]) / p2p
-                sin = (loc_dev[j][0] - loc_dev[i][0]) / p2p
+                                        loc_dev[i][1]) * dr / dist_p
+                cos = -(loc_dev[j][1] - loc_dev[i][1]) / dist_p
+                sin = (loc_dev[j][0] - loc_dev[i][0]) / dist_p
 
                 tmpx1 = tmpx + ddr * cos
                 tmpx2 = tmpx - ddr * cos
                 tmpy1 = tmpy + ddr * sin
                 tmpy2 = tmpy - ddr * sin
-                points.append([tmpx1, tmpy1])
-                points.append([tmpx2, tmpy2])
-            else:
-                tmpx = loc_dev[i][0] + (loc_dev[j][0] - loc_dev[i][0]
-                                        ) * dists[i] / (dists[i] + dists[j])
-                tmpy = loc_dev[i][1] + (loc_dev[j][1] - loc_dev[i][1]
-                                        ) * dists[i] / (dists[i] + dists[j])
 
-            if dists[i] + dists[j] >= p2p:
                 k = 3 - i - j
                 dev1 = math.sqrt((tmpx1 - loc_dev[k][0]) *
                                  (tmpx1 - loc_dev[k][0]) +
@@ -116,8 +101,7 @@ def cal_position(dists, loc_dev):
                     point[1] = tmpy1 + (loc_dev[k][1] -
                                         tmpx1) * (1 / 2 - dists[k] /
                                                   (2 * dev1))
-                    found = True
-                    break
+                    return np.array(point).reshape(-1)
                 dev2 = math.sqrt((tmpx2 - loc_dev[k][0]) *
                                  (tmpx2 - loc_dev[k][0]) +
                                  (tmpy2 - loc_dev[k][1]) *
@@ -129,18 +113,17 @@ def cal_position(dists, loc_dev):
                     point[1] = tmpy2 + (loc_dev[k][1] -
                                         tmpx2) * (1 / 2 - dists[k] /
                                                   (2 * dev2))
-                    found = True
-                    break
+                    return np.array(point).reshape(-1)
+            else:
+                tmpx = loc_dev[i][0] + (loc_dev[j][0] - loc_dev[i][0]
+                                        ) * dists[i] / (dists[i] + dists[j])
+                tmpy = loc_dev[i][1] + (loc_dev[j][1] - loc_dev[i][1]
+                                        ) * dists[i] / (dists[i] + dists[j])
 
             point[0] += tmpx
             point[1] += tmpy
-            points3.append([tmpx, tmpy])
 
-    if not found:
-        point[0] /= 3
-        point[1] /= 3
-
-    return np.array(point).reshape(-1)
+    return (np.array(point) / 3).reshape(-1)
 
 
 def calculate_distance(rssis):
@@ -166,14 +149,28 @@ import json
 
 tmp1 = tmp2 = tmp3 = np.array([8, 8.0])
 import matplotlib.pyplot as plt
+
+plt.figure()
+locd = np.array(loc_dev)
+plt.xlim(-2, 18)
+plt.ylim(-2, 18)
+plt.xticks(np.arange(-2, 18, 2))
+plt.yticks(np.arange(-2, 18, 2))
+plt.grid()
+plt.scatter(locd[:, 0], locd[:, 1])
+plt.plot([0, 0], [0, 16], color='black')
+plt.plot([0, 16], [16, 16], color='black')
+plt.plot([16, 16], [16, 0], color='black')
+plt.plot([16, 0], [0, 0], color='black')
 for i in range(8):
     l1, l2, t = location(f"./data/test/wifi_data_{i}.npy")
     output[t] = l1.tolist(), l2.tolist(), GT[i].tolist()
-    plt.plot([tmp1[0], l1[0]], [tmp1[1], l1[1]], color='b')
-    plt.plot([GT[i][0], l1[0]], [GT[i][1], l1[1]], color='g')
-    #plt.plot([tmp2[0], l2[0]], [tmp2[1], l2[1]], color='b')
-    #plt.plot([GT[i][0], l2[0]], [GT[i][1], l2[1]], color='g')
-    plt.plot([tmp3[0], GT[i][0]], [tmp3[1], GT[i][1]], color='r')
+    if i != 0:
+        plt.plot([tmp1[1], l1[1]], [tmp1[0], l1[0]], color='b')
+        #plt.plot([GT[i][0], l1[0]], [GT[i][1], l1[1]], color='g')
+        plt.plot([tmp2[1], l2[1]], [tmp2[0], l2[0]], color='g')
+        #plt.plot([GT[i][0], l2[0]], [GT[i][1], l2[1]], color='g')
+        plt.plot([tmp3[1], GT[i][1]], [tmp3[0], GT[i][0]], color='r')
     tmp1 = l1
     tmp2 = l2
     tmp3 = GT[i]
