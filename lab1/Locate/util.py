@@ -7,6 +7,9 @@ def get_rssi(data, devices):
         data[data[:, 0] == devices[0], 3], data[data[:, 0] == devices[1], 3],
         data[data[:, 0] == devices[2], 3]
     ]
+    for i in range(3):
+        l = len(datas[i])
+        datas[i] = datas[i][np.argsort(datas[i])[l // 10:l - l // 10]]
     rssi = [
         datas[0].astype(np.float32).mean(), datas[1].astype(np.float32).mean(),
         datas[2].astype(np.float32).mean()
@@ -19,6 +22,9 @@ def read_dists(data, devices):
         data[data[:, 0] == devices[0], 4], data[data[:, 0] == devices[1], 4],
         data[data[:, 0] == devices[2], 4]
     ]
+    for i in range(3):
+        l = len(datas[i])
+        datas[i] = datas[i][np.argsort(datas[i])[l // 10:l - l // 10]]
     dists = [
         datas[0].astype(np.float32).mean(), datas[1].astype(np.float32).mean(),
         datas[2].astype(np.float32).mean()
@@ -170,6 +176,6 @@ for i in range(8):
     tmp3 = GT[i]
 
 import json
-with open("output.json", "w") as f:
+with open("./frontend/data/data.json", "w") as f:
     f.write(json.dumps(output))
 plt.show()
