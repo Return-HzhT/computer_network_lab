@@ -153,10 +153,24 @@
             var gt_layer = L.layerGroup().addTo(map);
             var rssi_layer = L.layerGroup().addTo(map);
             var dis_layer = L.layerGroup().addTo(map);
+            var router_icon = L.icon({
+            iconUrl: './static/img/router_icon.dio.png',
+            iconSize: [30, 30]
+            // iconAnchor: [12, 41],
+            // popupAnchor: [1, -34]
+            });
 
+            var p_router = [[4.3, 14.7], [0.2, 5], [15.8, 5]]
+            for(i = 0; i < p_router.length; i++) {
+                var [x, y] = p_router[i]
+                rssi_marker = L.marker([y, x], {
+                    radius: 4,
+                    icon: router_icon
+                }).addTo(map);
+            }
 
             // 连接线
-            rssi_polyline = L.polyline(rssiData, {
+            rssi_polyline = L.polyline(rssiData.map(d => [d[1], d[0]]), {
                     color: 'blue',
                     weight: 2,
                     opacity: 0.7
@@ -164,28 +178,29 @@
             rssi_layer.addLayer(rssi_polyline);
             for(i = 0; i < rssiData.length; i++) {
                 // 绘制点
-                var [x, y] = rssiData[i];
-                rssi_marker = L.circleMarker(rssiData[i], {
+                var [y, x] = rssiData[i];
+                var [y1, x1] = gtData[i];
+                rssi_marker = L.circleMarker([x, y], {
                     radius: 4,
                     color: 'blue',
                     fillColor: 'blue',
                 fillOpacity: 1
                 }).addTo(map);
-                rssi_marker.bindPopup('rssi:['+i+'] (' + x + ', ' + y + ')');
+                rssi_marker.bindPopup('rssi:['+i+'] (' + y + ', ' + x + ')');
                 rssi_layer.addLayer(rssi_marker);
 
-                rssi_gt_polyline = L.polyline([gtData[i], rssiData[i]], {
+                rssi_gt_polyline = L.polyline([[x1, y1], [x, y]], {
                     color: 'black',
                     weight: 1,
                     opacity: 0.7
 
                 }).addTo(map);
-                var dist = Math.sqrt((x - gtData[i][0])*(x - gtData[i][0]) + (y - gtData[i][1])*(y - gtData[i][1]));
+                var dist = Math.sqrt((x - x1)*(x - x1) + (y - y1)*(y - y1));
                 rssi_gt_polyline.bindPopup('dis['+i+'] and gt['+i+']:'+dist);
                 rssi_layer.addLayer(rssi_gt_polyline);
             }
             // 连接线
-            dis_polyline = L.polyline(disData, {
+            dis_polyline = L.polyline(disData.map(d => [d[1], d[0]]), {
                     color: 'green',
                     weight: 2,
                     opacity: 0.7
@@ -193,22 +208,23 @@
             dis_layer.addLayer(dis_polyline);
             for(i = 0; i < disData.length; i++) {
                 // 绘制点
-                var [x, y] = disData[i];
-                dis_marker = L.circleMarker(disData[i], {
+                var [y, x] = disData[i];
+                var [y1, x1] = gtData[i];
+                dis_marker = L.circleMarker([x, y], {
                     radius: 4,
                     color: 'green',
                     fillColor: 'green',
                 fillOpacity: 1
                 }).addTo(map);
-                dis_marker.bindPopup('dis:['+i+'] ' + '('+x + ', ' + y+')');
+                dis_marker.bindPopup('dis:['+i+'] ' + '('+y + ', ' + x+')');
                 dis_layer.addLayer(dis_marker);
-                dis_gt_polyline = L.polyline([gtData[i], disData[i]], {
+                dis_gt_polyline = L.polyline([[x1, y1], [x, y]], {
                     color: 'black',
                     weight: 1,
                     opacity: 0.7
 
                 }).addTo(map);
-                var dist = Math.sqrt((x - gtData[i][0])*(x - gtData[i][0]) + (y - gtData[i][1])*(y - gtData[i][1]));
+                var dist = Math.sqrt((x - x1)*(x - x1) + (y - y1)*(y - y1));
                 dis_gt_polyline.bindPopup('dis['+i+'] and gt['+i+']:'+dist);
                 dis_layer.addLayer(dis_gt_polyline);
             }
@@ -219,7 +235,7 @@
             };
 
             // 连接线
-            gt_polyline = L.polyline(gtData, {
+            gt_polyline = L.polyline(gtData.map(d => [d[1], d[0]]), {
                     color: 'red',
                     weight: 2,
                     opacity: 0.7
@@ -227,14 +243,14 @@
             gt_layer.addLayer(gt_polyline);
             for(i = 0; i < gtData.length; i++) {
                 // 绘制点
-                var [x, y] = gtData[i];
-                gt_marker = L.circleMarker(gtData[i], {
+                var [y, x] = gtData[i];
+                gt_marker = L.circleMarker([x, y], {
                     radius: 4,
                     color: 'red',
                     fillColor: 'red',
                 fillOpacity: 1
                 }).addTo(map);
-                gt_marker.bindPopup('gt:['+i+'] ' + '('+x + ', ' + y+')');
+                gt_marker.bindPopup('gt:['+i+'] ' + '('+y + ', ' + x+')');
                 gt_layer.addLayer(gt_marker);
             }
             // 添加图层控制
