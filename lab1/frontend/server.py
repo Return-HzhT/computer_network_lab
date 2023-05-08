@@ -2,12 +2,6 @@ from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-coordinates = [(1, 2), (3, 4), (5, 6)]
-
-@app.route('/coordinates', methods=['GET'])
-def get_coordinates():
-    return jsonify(coordinates)
-
 @app.route('/')
 def index():
     return render_template('coordiantes.html')
